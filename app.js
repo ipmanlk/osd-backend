@@ -3,6 +3,8 @@ const translate = require('@vitalets/google-translate-api');
 const bodyParser = require('body-parser');
 const fetch = require('node-fetch');
 const app = express();
+const dao = require("./dao");
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -10,10 +12,16 @@ app.get('/translate', (req, res) => {
     const word = req.query.word || null;
 
     if (word !== null) {
-        const lang = (/^[A-Za-z][\sA-Za-z0-9.\'-]*$/.test(word)) ? "si" : "en";
+        const lang = getLang(word);
         translate(word, { to: lang }).then(resp => {
-            res.set('Cache-Control', 'public, max-age=15811200, s-maxage=31536000');
-            res.send(JSON.stringify([resp.text]));
+            if (resp.text && (getLang(resp.text) !== lang)) {
+                dao.save(word, resp.text);
+                res.set('Cache-Control', 'public, max-age=15811200, s-maxage=31536000');
+                res.send(JSON.stringify([resp.text]));
+            } else {
+                res.send("-1");
+            }
+
         }).catch(err => {
             console.error(err);
         });
@@ -25,9 +33,14 @@ app.get('/translate', (req, res) => {
 app.post('/translate', (req, res) => {
     const text = req.body.text || null;
     if (text !== null) {
-        const lang = (/^[A-Za-z][\sA-Za-z0-9.\'-]*$/.test(text)) ? "si" : "en";
+        const lang = getLang(text);
         translate(text, { to: lang }).then(resp => {
-            res.send(JSON.stringify([resp.text]));
+            if (resp.text && (getLang(resp.text) !== lang)) {
+                res.send(JSON.stringify([resp.text]));
+            } else {
+                res.send("-1");
+            }
+
         }).catch(err => {
             console.error(err);
         });
@@ -62,11 +75,15 @@ const request = (url) => {
     });
 }
 
+const getLang = (text) => {
+    const lang = (/^[A-Za-z][\sA-Za-z0-9.\'-]*$/.test(text)) ? "si" : "en";
+    return lang;
+}
+
 app.use((req, res, next) => {
     res.status(404).send("Sorry can't find that!")
 })
 
-// Start the server
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
     console.log(`App listening on port ${PORT}`);
