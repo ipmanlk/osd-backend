@@ -27,18 +27,30 @@ app.post('/translate', (req, res) => {
     });
 });
 
-app.get('/datamuse', (req, res) => {
-    const word = req.query.word || "unknown";
-    const type = req.query.type || "unknown";
-    const url = (type == "def") ? `http://api.datamuse.com/words?max=1&md=d&sp=${word}` : `https://api.datamuse.com/words?max=10&rel_syn=${word}`;
-
-    fetch(url)
-        .then(response => response.text())
-        .then(text => {
-            res.set('Cache-Control', 'public, max-age=15811200, s-maxage=31536000');
-            res.send(text);
-        });
+app.get('/datamuse', async (req, res) => {
+    const word = req.query.word || null;
+    if (word !== null) {
+        let defs = await request(`http://api.datamuse.com/words?max=1&md=d&sp=${word}`);
+        let syns = await request(`https://api.datamuse.com/words?max=10&rel_syn=${word}`);
+        defs = defs[0];
+        res.send(JSON.stringify({ defs, syns }));
+    } else {
+        res.send("-1");
+    }
 });
+
+const request = (url) => {
+    return new Promise((resolve, reject) => {
+        fetch(url)
+            .then(response => response.json())
+            .then(json => {
+                resolve(json);
+            })
+            .catch(error => {
+                reject(error);
+            })
+    });
+}
 
 app.use((req, res, next) => {
     res.status(404).send("Sorry can't find that!")
@@ -47,8 +59,8 @@ app.use((req, res, next) => {
 // Start the server
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
-  console.log(`App listening on port ${PORT}`);
-  console.log('Press Ctrl+C to quit.');
+    console.log(`App listening on port ${PORT}`);
+    console.log('Press Ctrl+C to quit.');
 });
 
 module.exports = app;
