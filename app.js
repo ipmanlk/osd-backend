@@ -7,24 +7,33 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.get('/translate', (req, res) => {
-    const word = req.query.word || "unknown"
-    const lang = (/^[A-Za-z][\sA-Za-z0-9.\'-]*$/.test(word)) ? "si" : "en";
-    translate(word, { to: lang }).then(resp => {
-        res.set('Cache-Control', 'public, max-age=15811200, s-maxage=31536000');
-        res.send(JSON.stringify([resp.text]));
-    }).catch(err => {
-        console.error(err);
-    });
+    const word = req.query.word || null;
+
+    if (word !== null) {
+        const lang = (/^[A-Za-z][\sA-Za-z0-9.\'-]*$/.test(word)) ? "si" : "en";
+        translate(word, { to: lang }).then(resp => {
+            res.set('Cache-Control', 'public, max-age=15811200, s-maxage=31536000');
+            res.send(JSON.stringify([resp.text]));
+        }).catch(err => {
+            console.error(err);
+        });
+    } else {
+        res.send("-1");
+    }
 });
 
 app.post('/translate', (req, res) => {
-    const text = req.body.text;
-    const lang = (/^[A-Za-z][\sA-Za-z0-9.\'-]*$/.test(text)) ? "si" : "en";
-    translate(text, { to: lang }).then(resp => {
-        res.send(JSON.stringify([resp.text]));
-    }).catch(err => {
-        console.error(err);
-    });
+    const text = req.body.text || null;
+    if (text !== null) {
+        const lang = (/^[A-Za-z][\sA-Za-z0-9.\'-]*$/.test(text)) ? "si" : "en";
+        translate(text, { to: lang }).then(resp => {
+            res.send(JSON.stringify([resp.text]));
+        }).catch(err => {
+            console.error(err);
+        });
+    } else {
+        res.send("-1");
+    }
 });
 
 app.get('/datamuse', async (req, res) => {
@@ -33,6 +42,7 @@ app.get('/datamuse', async (req, res) => {
         let defs = await request(`http://api.datamuse.com/words?max=1&md=d&sp=${word}`);
         let syns = await request(`https://api.datamuse.com/words?max=10&rel_syn=${word}`);
         defs = defs[0];
+        res.set('Cache-Control', 'public, max-age=15811200, s-maxage=31536000');
         res.send(JSON.stringify({ defs, syns }));
     } else {
         res.send("-1");
