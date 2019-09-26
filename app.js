@@ -4,13 +4,13 @@ const bodyParser = require('body-parser');
 const fetch = require('node-fetch');
 const app = express();
 const dao = require("./dao");
+const config = require("./config/config.json");
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.get('/translate', (req, res) => {
     const word = req.query.word || null;
-
     if (word !== null) {
         const lang = getLang(word);
         translate(word, { to: lang }).then(resp => {
@@ -59,6 +59,17 @@ app.get('/datamuse', async (req, res) => {
         res.send(JSON.stringify({ defs, syns }));
     } else {
         res.send("-1");
+    }
+});
+
+// get unknown words and clear database (words.json)
+app.get('/database', async (req, res) => {
+    const key = req.query.key || null;
+    if (key !== null && key == config.KEY) {
+        let data = dao.check();
+        res.send(data);
+    } else {
+        res.send("Missing Permissions!.");
     }
 });
 
