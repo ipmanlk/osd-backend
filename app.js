@@ -19,7 +19,7 @@ app.get('/translate', (req, res) => {
 
 app.post('/translate', (req, res) => {
     const text = req.body.text;
-    const lang = (/^[A-Za-z][\sA-Za-z0-9.\'-]*$/.test(word)) ? "si" : "en";
+    const lang = (/^[A-Za-z][\sA-Za-z0-9.\'-]*$/.test(text)) ? "si" : "en";
     translate(text, { to: lang }).then(resp => {
         res.send(JSON.stringify([resp.text]));
     }).catch(err => {
