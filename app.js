@@ -19,7 +19,7 @@ app.get('/translate', (req, res) => {
                 res.set('Cache-Control', 'public, max-age=15811200, s-maxage=31536000');
                 res.send(JSON.stringify([resp.text]));
             } else {
-                res.send("-1");
+                res.send(JSON.stringify({ "error": "-1" }));
             }
 
         }).catch(err => {
@@ -38,14 +38,14 @@ app.post('/translate', (req, res) => {
             if (resp.text && (getLang(resp.text) !== lang)) {
                 res.send(JSON.stringify([resp.text]));
             } else {
-                res.send("-1");
+                res.send(JSON.stringify({ "error": "-1" }));
             }
 
         }).catch(err => {
             console.error(err);
         });
     } else {
-        res.send("-1");
+        res.send(JSON.stringify({ "error": "-1" }));
     }
 });
 
@@ -58,7 +58,7 @@ app.get('/datamuse', async (req, res) => {
         res.set('Cache-Control', 'public, max-age=15811200, s-maxage=31536000');
         res.send(JSON.stringify({ defs, syns }));
     } else {
-        res.send("-1");
+        res.send(JSON.stringify({ "error": "-1" }));
     }
 });
 
@@ -69,7 +69,7 @@ app.get('/database', async (req, res) => {
         let data = dao.check();
         res.send(data);
     } else {
-        res.send("Missing Permissions!.");
+        res.send(JSON.stringify({ "error": "Missing Permissions!." }));
     }
 });
 
