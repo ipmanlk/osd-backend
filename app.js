@@ -3,8 +3,6 @@ const translate = require('@vitalets/google-translate-api');
 const bodyParser = require('body-parser');
 const fetch = require('node-fetch');
 const app = express();
-const dao = require("./dao");
-const config = require("./config/config.json");
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -15,7 +13,6 @@ app.get('/translate', (req, res) => {
         const lang = getLang(word);
         translate(word, { to: lang }).then(resp => {
             if (resp.text && (getLang(resp.text) !== lang)) {
-                dao.save(word, resp.text);
                 res.set('Cache-Control', 'public, max-age=15811200, s-maxage=31536000');
                 res.send(JSON.stringify([resp.text]));
             } else {
@@ -59,17 +56,6 @@ app.get('/datamuse', async (req, res) => {
         res.send(JSON.stringify({ defs, syns }));
     } else {
         res.send(JSON.stringify({ "error": "-1" }));
-    }
-});
-
-// get unknown words and clear database (words.json)
-app.get('/database', async (req, res) => {
-    const key = req.query.key || null;
-    if (key !== null && key == config.KEY) {
-        let data = dao.check();
-        res.send(data);
-    } else {
-        res.send(JSON.stringify({ "error": "Missing Permissions!." }));
     }
 });
 
